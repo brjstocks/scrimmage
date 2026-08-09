@@ -3,291 +3,350 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+      content="width=device-width,
+               initial-scale=1,
+               maximum-scale=1,
+               viewport-fit=cover,
+               user-scalable=no">
 <title>Scrimmage Football</title>
 <style>
-    * {
-        box-sizing: border-box;
-        -webkit-tap-highlight-color: transparent;
-    }
-    body {
-        margin: 0;
-        background: #101418;
-        color: white;
-        font-family: Arial, sans-serif;
-        overflow: hidden;
-        touch-action: manipulation;
-    }
-    #game {
-        width: 100vw;
-        height: 100vh;
-        max-width: 900px;
-        margin: auto;
-        position: relative;
-        background: #152019;
-    }
-    /* -------------------------
-       TOP HUD
-    ------------------------- */
+/* =========================================================
+   BASIC RESET
+========================================================= */
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+html,
+body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    /* Important for Safari */
+    min-height: 100%;
+    
+    overflow: hidden;
+    background: #101418;
+    color: white;
+    font-family: Arial, sans-serif;
+    touch-action: manipulation;
+}
+/* =========================================================
+   GAME CONTAINER
+   100dvh is important for iPhone/Safari because it adjusts
+   when Safari's toolbar is visible.
+========================================================= */
+#game {
+    position: relative;
+    width: 100%;
+    height: 100dvh;
+    min-height: 0;
+    max-width: 900px;
+    margin: 0 auto;
+    background: #152019;
+    /*
+       Keeps content out of the iPhone safe areas.
+    */
+    padding-bottom: env(safe-area-inset-bottom);
+}
+/* =========================================================
+   HUD
+========================================================= */
+#hud {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background: #111820;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    border-bottom: 2px solid #303840;
+    z-index: 20;
+}
+.hudItem {
+    text-align: center;
+    font-size: 11px;
+    color: #9da8b2;
+}
+.hudValue {
+    display: block;
+    font-size: 19px;
+    font-weight: bold;
+    color: white;
+    margin-top: 3px;
+}
+/* =========================================================
+   FIELD
+   Instead of bottom: 0, we give the field explicit space
+   above the control bar.
+========================================================= */
+#field {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 64px;
+    /*
+       Controls are 82px tall.
+       This keeps the field from going underneath them.
+    */
+    bottom: 82px;
+    overflow: hidden;
+    background:
+        repeating-linear-gradient(
+            to bottom,
+            #1d6b36 0px,
+            #1d6b36 48px,
+            #216f39 48px,
+            #216f39 96px
+        );
+}
+/* =========================================================
+   YARD LINES
+========================================================= */
+.yardLine {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: rgba(255,255,255,.65);
+}
+.yardNumber {
+    position: absolute;
+    left: 12px;
+    color: rgba(255,255,255,.5);
+    font-size: 20px;
+    font-weight: bold;
+}
+/* =========================================================
+   ROUTES
+========================================================= */
+#routes {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 2;
+}
+.routeLine {
+    fill: none;
+    stroke: #ffe55c;
+    stroke-width: 4;
+    stroke-dasharray: 10 7;
+    opacity: .9;
+}
+/* =========================================================
+   PLAYERS
+========================================================= */
+.player {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    position: absolute;
+    transform: translate(-50%, -50%);
+    z-index: 8;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 10px;
+    font-weight: bold;
+    border: 2px solid white;
+    transition:
+        left .15s linear,
+        top .15s linear;
+}
+.offense {
+    background: #1677ff;
+}
+.defense {
+    background: #d93030;
+}
+.quarterback {
+    width: 36px;
+    height: 36px;
+    background: #0b5ccc;
+}
+/* =========================================================
+   FOOTBALL
+========================================================= */
+#ball {
+    width: 15px;
+    height: 10px;
+    background: #8b4a22;
+    border: 2px solid #542b13;
+    border-radius: 50%;
+    position: absolute;
+    z-index: 15;
+    transform:
+        translate(-50%, -50%)
+        rotate(-20deg);
+    display: none;
+}
+/* =========================================================
+   BOTTOM CONTROLS
+   This is the important Safari fix.
+   The controls have their own fixed-height area and are
+   placed ABOVE the Safari safe-area.
+========================================================= */
+#controls {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 82px;
+    padding:
+        8px
+        8px
+        calc(8px + env(safe-area-inset-bottom))
+        8px;
+    background: rgba(10,15,18,.96);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 7px;
+    z-index: 50;
+}
+.controlButton {
+    flex: 1;
+    height: 58px;
+    max-width: 150px;
+    border: none;
+    border-radius: 12px;
+    background: #202a31;
+    color: white;
+    font-size: 13px;
+    font-weight: bold;
+    border: 2px solid #44515a;
+}
+.controlButton:active {
+    transform: scale(.95);
+}
+#snapButton {
+    background: #f0b400;
+    color: #111;
+    border-color: #ffd54a;
+}
+#snapButton.hidden {
+    display: none;
+}
+.throwButton {
+    background: #126bdb;
+    border-color: #4b9aff;
+}
+.throwButton:disabled {
+    opacity: .3;
+}
+/* =========================================================
+   MESSAGE
+========================================================= */
+#message {
+    position: absolute;
+    top: 76px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    background: rgba(0,0,0,.75);
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    pointer-events: none;
+    white-space: nowrap;
+}
+/* =========================================================
+   PLAY SELECTION
+========================================================= */
+#playSelect {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 64px;
+    /*
+       Stops the play menu from running underneath the controls.
+    */
+    bottom: 82px;
+    background: #151b20;
+    z-index: 40;
+    padding: 20px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+#playSelect h1 {
+    text-align: center;
+    margin: 5px 0;
+    font-size: 28px;
+}
+#playSelect p {
+    text-align: center;
+    color: #9da8b2;
+    margin-bottom: 25px;
+}
+.playGrid {
+    display: grid;
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    max-width: 600px;
+    margin: auto;
+}
+.playButton {
+    background: #222b32;
+    color: white;
+    border: 2px solid #38444d;
+    border-radius: 12px;
+    padding: 18px 10px;
+    min-height: 100px;
+    font-size: 17px;
+    font-weight: bold;
+}
+.playButton:active {
+    transform: scale(.97);
+    background: #303c45;
+}
+.playDescription {
+    display: block;
+    font-size: 12px;
+    color: #9da8b2;
+    margin-top: 8px;
+    font-weight: normal;
+}
+/* =========================================================
+   SMALL PHONE SCREEN
+========================================================= */
+@media (max-width: 500px) {
     #hud {
-        height: 70px;
-        background: #111820;
-        display: flex;
-        justify-content: space-around;
-        align-items: center;
-        border-bottom: 2px solid #303840;
-        position: relative;
-        z-index: 20;
+        height: 58px;
     }
-    .hudItem {
-        text-align: center;
-        font-size: 12px;
-        color: #9da8b2;
-    }
-    .hudValue {
-        display: block;
-        font-size: 20px;
-        font-weight: bold;
-        color: white;
-        margin-top: 3px;
-    }
-    /* -------------------------
-       PLAY SELECT SCREEN
-    ------------------------- */
-    #playSelect {
-        position: absolute;
-        inset: 70px 0 0 0;
-        background: #151b20;
-        z-index: 30;
-        padding: 20px;
-        overflow-y: auto;
-    }
-    #playSelect h1 {
-        text-align: center;
-        margin: 5px 0 5px;
-        font-size: 28px;
-    }
-    #playSelect p {
-        text-align: center;
-        color: #9da8b2;
-        margin-bottom: 25px;
-    }
-    .playGrid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
-        max-width: 600px;
-        margin: auto;
-    }
-    .playButton {
-        background: #222b32;
-        color: white;
-        border: 2px solid #38444d;
-        border-radius: 12px;
-        padding: 18px 10px;
-        min-height: 100px;
-        font-size: 17px;
-        font-weight: bold;
-    }
-    .playButton:active {
-        transform: scale(.97);
-        background: #303c45;
-    }
-    .playDescription {
-        display: block;
-        font-size: 12px;
-        color: #9da8b2;
-        margin-top: 8px;
-        font-weight: normal;
-    }
-    /* -------------------------
-       FIELD
-    ------------------------- */
     #field {
-        position: absolute;
-        top: 70px;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        overflow: hidden;
-        background:
-            repeating-linear-gradient(
-                to bottom,
-                #1d6b36 0px,
-                #1d6b36 48px,
-                #216f39 48px,
-                #216f39 96px
-            );
+        top: 58px;
     }
-    .yardLine {
-        position: absolute;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: rgba(255,255,255,.65);
+    #playSelect {
+        top: 58px;
     }
-    .yardNumber {
-        position: absolute;
-        left: 12px;
-        color: rgba(255,255,255,.5);
-        font-size: 20px;
-        font-weight: bold;
+    #message {
+        top: 68px;
     }
-    /* -------------------------
-       ROUTES
-    ------------------------- */
-    #routes {
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        z-index: 2;
-    }
-    .routeLine {
-        fill: none;
-        stroke: #ffe55c;
-        stroke-width: 4;
-        stroke-dasharray: 10 7;
-        opacity: .9;
-    }
-    .routeArrow {
-        fill: #ffe55c;
-    }
-    /* -------------------------
-       PLAYERS
-    ------------------------- */
-    .player {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        position: absolute;
-        transform: translate(-50%, -50%);
-        z-index: 8;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-size: 10px;
-        font-weight: bold;
-        border: 2px solid white;
-        transition: left .15s linear, top .15s linear;
-    }
-    .offense {
-        background: #1677ff;
-    }
-    .defense {
-        background: #d93030;
-    }
-    .quarterback {
-        width: 36px;
-        height: 36px;
-        background: #0b5ccc;
-    }
-    /* -------------------------
-       BALL
-    ------------------------- */
-    #ball {
-        width: 15px;
-        height: 10px;
-        background: #8b4a22;
-        border: 2px solid #542b13;
-        border-radius: 50%;
-        position: absolute;
-        z-index: 15;
-        transform: translate(-50%, -50%) rotate(-20deg);
-        display: none;
-    }
-    /* -------------------------
-       CONTROLS
-    ------------------------- */
     #controls {
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: 12px;
-        z-index: 25;
-        display: flex;
-        justify-content: center;
-        gap: 8px;
-        padding: 0 8px;
+        height: 78px;
     }
     .controlButton {
-        flex: 1;
-        max-width: 150px;
-        min-height: 58px;
-        border: none;
-        border-radius: 12px;
-        background: #202a31;
-        color: white;
-        font-size: 14px;
-        font-weight: bold;
-        border: 2px solid #44515a;
+        height: 54px;
+        font-size: 11px;
+        padding: 0 4px;
     }
-    .controlButton:active {
-        transform: scale(.95);
+    .playButton {
+        min-height: 86px;
+        padding: 12px 5px;
+        font-size: 15px;
     }
-    #snapButton {
-        background: #f0b400;
-        color: #111;
-        border-color: #ffd54a;
-    }
-    #snapButton.hidden {
-        display: none;
-    }
-    .throwButton {
-        background: #126bdb;
-        border-color: #4b9aff;
-    }
-    .throwButton:disabled {
-        opacity: .3;
-    }
-    /* -------------------------
-       MESSAGE
-    ------------------------- */
-    #message {
-        position: absolute;
-        top: 84px;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 20;
-        background: rgba(0,0,0,.75);
-        padding: 9px 16px;
-        border-radius: 20px;
-        font-size: 14px;
-        pointer-events: none;
-        white-space: nowrap;
-    }
-    /* -------------------------
-       MOBILE
-    ------------------------- */
-    @media (max-width: 500px) {
-        #hud {
-            height: 58px;
-        }
-        #field {
-            top: 58px;
-        }
-        #playSelect {
-            inset: 58px 0 0 0;
-        }
-        .playGrid {
-            grid-template-columns: 1fr 1fr;
-        }
-        .playButton {
-            min-height: 90px;
-            padding: 12px 5px;
-        }
-        .controlButton {
-            min-height: 55px;
-            font-size: 12px;
-        }
-        #message {
-            top: 68px;
-        }
-    }
+}
 </style>
 </head>
 <body>
 <div id="game">
-    <!-- HUD -->
+    <!-- ================= HUD ================= -->
     <div id="hud">
         <div class="hudItem">
             DOWN
@@ -306,42 +365,48 @@
             <span class="hudValue" id="score">0</span>
         </div>
     </div>
-    <!-- PLAY SELECT -->
+    <!-- ================= PLAY SELECTION ================= -->
     <div id="playSelect">
         <h1>SCRIMMAGE</h1>
         <p>Choose your play</p>
         <div class="playGrid">
-            <button class="playButton" onclick="selectPlay('slants')">
+            <button class="playButton"
+                    onclick="selectPlay('slants')">
                 SLANTS
                 <span class="playDescription">
                     Quick inside routes
                 </span>
             </button>
-            <button class="playButton" onclick="selectPlay('fourVerts')">
+            <button class="playButton"
+                    onclick="selectPlay('fourVerts')">
                 FOUR VERTICALS
                 <span class="playDescription">
                     Send everyone deep
                 </span>
             </button>
-            <button class="playButton" onclick="selectPlay('mesh')">
+            <button class="playButton"
+                    onclick="selectPlay('mesh')">
                 MESH
                 <span class="playDescription">
                     Crossing routes
                 </span>
             </button>
-            <button class="playButton" onclick="selectPlay('levels')">
+            <button class="playButton"
+                    onclick="selectPlay('levels')">
                 LEVELS
                 <span class="playDescription">
                     Short + intermediate
                 </span>
             </button>
-            <button class="playButton" onclick="selectPlay('rbWheel')">
+            <button class="playButton"
+                    onclick="selectPlay('rbWheel')">
                 RB WHEEL
                 <span class="playDescription">
                     RB flexes outside
                 </span>
             </button>
-            <button class="playButton" onclick="selectPlay('smash')">
+            <button class="playButton"
+                    onclick="selectPlay('smash')">
                 SMASH
                 <span class="playDescription">
                     Corner + hitch
@@ -349,11 +414,9 @@
             </button>
         </div>
     </div>
-    <!-- FIELD -->
+    <!-- ================= FIELD ================= -->
     <div id="field">
         <svg id="routes"
-             width="100%"
-             height="100%"
              viewBox="0 0 900 800"
              preserveAspectRatio="none">
         </svg>
@@ -364,10 +427,18 @@
         <div class="yardLine" style="top:64%;"></div>
         <div class="yardLine" style="top:77%;"></div>
         <div class="yardLine" style="top:90%;"></div>
-        <div class="yardNumber" style="top:9%;">10</div>
-        <div class="yardNumber" style="top:35%;">20</div>
-        <div class="yardNumber" style="top:61%;">30</div>
-        <div class="yardNumber" style="top:87%;">40</div>
+        <div class="yardNumber" style="top:9%;">
+            10
+        </div>
+        <div class="yardNumber" style="top:35%;">
+            20
+        </div>
+        <div class="yardNumber" style="top:61%;">
+            30
+        </div>
+        <div class="yardNumber" style="top:87%;">
+            40
+        </div>
         <!-- OFFENSE -->
         <div id="QB"
              class="player quarterback offense"
@@ -418,37 +489,37 @@
         <!-- BALL -->
         <div id="ball"></div>
     </div>
-    <!-- MESSAGE -->
+    <!-- ================= MESSAGE ================= -->
     <div id="message">
         Choose a play
     </div>
-    <!-- CONTROLS -->
+    <!-- ================= CONTROLS ================= -->
     <div id="controls">
         <button id="snapButton"
                 class="controlButton hidden"
                 onclick="snapBall()">
             SNAP
         </button>
-        <button class="controlButton throwButton"
-                id="throw1"
+        <button id="throw1"
+                class="controlButton throwButton"
                 onclick="throwBall('WR1')"
                 disabled>
             WR1
         </button>
-        <button class="controlButton throwButton"
-                id="throw2"
+        <button id="throw2"
+                class="controlButton throwButton"
                 onclick="throwBall('WR2')"
                 disabled>
             WR2
         </button>
-        <button class="controlButton throwButton"
-                id="throw3"
+        <button id="throw3"
+                class="controlButton throwButton"
                 onclick="throwBall('WR3')"
                 disabled>
             WR3
         </button>
-        <button class="controlButton throwButton"
-                id="throwRB"
+        <button id="throwRB"
+                class="controlButton throwButton"
                 onclick="throwBall('RB')"
                 disabled>
             RB
@@ -462,10 +533,12 @@
 let selectedPlay = null;
 let playStarted = false;
 let playEnded = false;
-let snapTime = 0;
 let score = 0;
 let down = 1;
 let distance = 10;
+/* =========================================================
+   PLAYERS
+========================================================= */
 const players = {
     WR1: document.getElementById("WR1"),
     WR2: document.getElementById("WR2"),
@@ -473,6 +546,9 @@ const players = {
     RB: document.getElementById("RB"),
     QB: document.getElementById("QB")
 };
+/* =========================================================
+   ROUTES
+========================================================= */
 const routes = {
     slants: {
         WR1: [
@@ -614,19 +690,21 @@ const routes = {
     }
 };
 /* =========================================================
-   PLAY SELECTION
+   SELECT PLAY
 ========================================================= */
 function selectPlay(playName) {
     selectedPlay = playName;
     playStarted = false;
     playEnded = false;
-    document.getElementById("playSelect").style.display = "none";
+    document.getElementById("playSelect")
+        .style.display = "none";
     resetPlayers();
     drawRoutes();
     document.getElementById("snapButton")
         .classList.remove("hidden");
-    document.getElementById("message").textContent =
-        "Presnap: route preview";
+    document.getElementById("message")
+        .textContent =
+        "PRESNAP — Check the routes";
     disableThrowButtons();
 }
 /* =========================================================
@@ -643,59 +721,82 @@ function resetPlayers() {
     players.RB.style.top = "86%";
     players.QB.style.left = "50%";
     players.QB.style.top = "78%";
-    document.getElementById("ball").style.display = "none";
+    document.getElementById("ball")
+        .style.display = "none";
 }
 /* =========================================================
    DRAW ROUTES
 ========================================================= */
 function drawRoutes() {
-    const svg = document.getElementById("routes");
+    const svg =
+        document.getElementById("routes");
     svg.innerHTML = "";
-    const playRoutes = routes[selectedPlay];
+    const playRoutes =
+        routes[selectedPlay];
     for (const playerName in playRoutes) {
-        const route = playRoutes[playerName];
+        const route =
+            playRoutes[playerName];
         let points = "";
         route.forEach(point => {
-            const x = point[0] / 100 * 900;
-            const y = point[1] / 100 * 800;
+            const x =
+                point[0] / 100 * 900;
+            const y =
+                point[1] / 100 * 800;
             points += `${x},${y} `;
         });
-        const polyline =
+        const line =
             document.createElementNS(
                 "http://www.w3.org/2000/svg",
                 "polyline"
             );
-        polyline.setAttribute("points", points);
-        polyline.setAttribute("class", "routeLine");
-        svg.appendChild(polyline);
+        line.setAttribute(
+            "points",
+            points
+        );
+        line.setAttribute(
+            "class",
+            "routeLine"
+        );
+        svg.appendChild(line);
     }
 }
 /* =========================================================
    SNAP
 ========================================================= */
 function snapBall() {
-    if (!selectedPlay || playStarted) return;
+    if (!selectedPlay || playStarted)
+        return;
     playStarted = true;
-    snapTime = performance.now();
     document.getElementById("snapButton")
         .classList.add("hidden");
-    document.getElementById("message").textContent =
+    document.getElementById("message")
+        .textContent =
         "PLAY ACTIVE";
     enableThrowButtons();
     animateRoutes();
 }
 /* =========================================================
-   ROUTE ANIMATION
+   ANIMATE ROUTES
 ========================================================= */
 function animateRoutes() {
-    const startTime = performance.now();
+    const startTime =
+        performance.now();
     const duration = 3500;
     function update() {
-        if (!playStarted || playEnded) return;
-        const elapsed = performance.now() - startTime;
+        if (!playStarted || playEnded)
+            return;
+        const elapsed =
+            performance.now() -
+            startTime;
         const progress =
-            Math.min(elapsed / duration, 1);
-        for (const playerName of ["WR1","WR2","WR3","RB"]) {
+            Math.min(
+                elapsed / duration,
+                1
+            );
+        for (
+            const playerName
+            of ["WR1","WR2","WR3","RB"]
+        ) {
             movePlayerAlongRoute(
                 playerName,
                 progress
@@ -705,45 +806,63 @@ function animateRoutes() {
             requestAnimationFrame(update);
         } else {
             document.getElementById("message")
-                .textContent = "Routes finished";
+                .textContent =
+                "Routes finished";
         }
     }
     requestAnimationFrame(update);
 }
 /* =========================================================
-   MOVE PLAYER ALONG ROUTE
+   MOVE PLAYER
 ========================================================= */
-function movePlayerAlongRoute(playerName, progress) {
-    const route = routes[selectedPlay][playerName];
-    if (!route) return;
-    const totalSegments = route.length - 1;
-    const scaled = progress * totalSegments;
-    const segment = Math.min(
-        Math.floor(scaled),
-        totalSegments - 1
-    );
+function movePlayerAlongRoute(
+    playerName,
+    progress
+) {
+    const route =
+        routes[selectedPlay][playerName];
+    if (!route)
+        return;
+    const totalSegments =
+        route.length - 1;
+    const scaled =
+        progress * totalSegments;
+    const segment =
+        Math.min(
+            Math.floor(scaled),
+            totalSegments - 1
+        );
     const localProgress =
         scaled - segment;
-    const start = route[segment];
-    const end = route[segment + 1];
+    const start =
+        route[segment];
+    const end =
+        route[segment + 1];
     const x =
         start[0] +
-        (end[0] - start[0]) * localProgress;
+        (end[0] - start[0]) *
+        localProgress;
     const y =
         start[1] +
-        (end[1] - start[1]) * localProgress;
-    players[playerName].style.left = x + "%";
-    players[playerName].style.top = y + "%";
+        (end[1] - start[1]) *
+        localProgress;
+    players[playerName].style.left =
+        x + "%";
+    players[playerName].style.top =
+        y + "%";
 }
 /* =========================================================
-   THROW
+   THROW BALL
 ========================================================= */
 function throwBall(targetName) {
-    if (!playStarted || playEnded) return;
+    if (!playStarted || playEnded)
+        return;
     playEnded = true;
     disableThrowButtons();
-    const target = players[targetName];
-    const ball = document.getElementById("ball");
+    const target =
+        players[targetName];
+    const ball =
+        document.getElementById("ball");
     ball.style.display = "block";
     const field =
         document.getElementById("field");
@@ -795,22 +914,31 @@ function animateBall(
     function animate(now) {
         const progress =
             Math.min(
-                (now - start) / duration,
+                (now - start) /
+                duration,
                 1
             );
         const x =
             startX +
-            (endX - startX) * progress;
+            (endX - startX) *
+            progress;
         const arc =
-            Math.sin(progress * Math.PI) * -80;
+            Math.sin(
+                progress * Math.PI
+            ) * -80;
         const y =
             startY +
-            (endY - startY) * progress +
+            (endY - startY) *
+            progress +
             arc;
-        ball.style.left = x + "px";
-        ball.style.top = y + "px";
+        ball.style.left =
+            x + "px";
+        ball.style.top =
+            y + "px";
         if (progress < 1) {
-            requestAnimationFrame(animate);
+            requestAnimationFrame(
+                animate
+            );
         } else {
             finishPlay(targetName);
         }
@@ -821,81 +949,64 @@ function animateBall(
    FINISH PLAY
 ========================================================= */
 function finishPlay(targetName) {
-    const target =
-        players[targetName];
-    /*
-       Simple prototype catch logic.
-       Later we can replace this with:
-       - defender coverage
-       - QB accuracy
-       - receiver ratings
-       - throw timing
-       - interceptions
-       - dropped passes
-    */
-    const chance = Math.random();
+    const chance =
+        Math.random();
     if (chance < .78) {
         const yards =
             Math.floor(
                 Math.random() * 15
             ) + 2;
         score += yards;
+        distance -= yards;
         document.getElementById("score")
             .textContent = score;
-        document.getElementById("message")
-            .textContent =
-            `${targetName} CATCH! +${yards} yards`;
-        distance -= yards;
         if (distance <= 0) {
-            distance = 10;
             down = 1;
+            distance = 10;
             document.getElementById("message")
                 .textContent =
                 `${targetName} CATCH! FIRST DOWN!`;
         } else {
             down++;
-            if (down > 4) {
-                down = 1;
-                distance = 10;
-                document.getElementById("message")
-                    .textContent =
-                    "TURNOVER ON DOWNS";
-            }
+            document.getElementById("message")
+                .textContent =
+                `${targetName} CATCH! +${yards} YARDS`;
         }
     } else {
+        down++;
         document.getElementById("message")
             .textContent =
             "INCOMPLETE!";
-        
-        down++;
-        if (down > 4) {
-            down = 1;
-            distance = 10;
-            document.getElementById("message")
-                .textContent =
-                "TURNOVER ON DOWNS";
-        }
+    }
+    if (down > 4) {
+        down = 1;
+        distance = 10;
+        document.getElementById("message")
+            .textContent =
+            "TURNOVER ON DOWNS";
     }
     updateHUD();
-    setTimeout(() => {
-        showPlaySelect();
-    }, 1400);
+    setTimeout(
+        showPlaySelect,
+        1400
+    );
 }
 /* =========================================================
-   PLAY SELECT AGAIN
+   SHOW PLAY SELECTION
 ========================================================= */
 function showPlaySelect() {
     document.getElementById("playSelect")
         .style.display = "block";
     document.getElementById("message")
-        .textContent = "Choose your next play";
+        .textContent =
+        "Choose your next play";
     selectedPlay = null;
     document.getElementById("routes")
         .innerHTML = "";
     resetPlayers();
 }
 /* =========================================================
-   BUTTON STATES
+   BUTTONS
 ========================================================= */
 function enableThrowButtons() {
     document.getElementById("throw1")
@@ -924,11 +1035,9 @@ function updateHUD() {
     document.getElementById("down")
         .textContent = down;
     document.getElementById("distance")
-        .textContent = Math.max(distance, 0);
+        .textContent =
+        Math.max(distance, 0);
 }
-/* =========================================================
-   INITIALIZATION
-========================================================= */
 updateHUD();
 </script>
 </body>
